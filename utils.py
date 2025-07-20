@@ -1,40 +1,43 @@
-import os
 import json
+import os
 import random
-import string
+from datetime import datetime
 
-ROOMS_DIR = "rooms"
+DATA_FILE = "rooms.json"
 
-if not os.path.exists(ROOMS_DIR):
-    os.makedirs(ROOMS_DIR)
+def load_data():
+    if not os.path.exists(DATA_FILE):
+        return {}
+    with open(DATA_FILE, "r") as f:
+        return json.load(f)
 
-def create_room(host_name):
-    code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
-    room_data = {
-        "host": host_name,
-        "players": {host_name: None},
+def save_data(data):
+    with open(DATA_FILE, "w") as f:
+        json.dump(data, f)
+
+def create_room(host):
+    code = str(random.randint(1000, 9999))
+    data = load_data()
+    data[code] = {
+        "host": host,
+        "players": {host: None},
         "started": False,
         "roles": {},
         "messages": [],
         "start_time": None
     }
-    save_room(code, room_data)
+    save_data(data)
     return code
 
 def load_room(code):
-    try:
-        with open(os.path.join(ROOMS_DIR, f"{code}.json"), "r") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return None
+    return load_data().get(code)
 
-def save_room(code, data):
-    with open(os.path.join(ROOMS_DIR, f"{code}.json"), "w") as f:
-        json.dump(data, f)
+def save_room(code, room):
+    data = load_data()
+    data[code] = room
+    save_data(data)
 
 def assign_roles(players):
-    roles = ["Rama", "Sita", "Ravana"]
-    others = ["Helper"] * (len(players) - 3)
-    all_roles = roles + others
-    random.shuffle(all_roles)
-    return dict(zip(players, all_roles))
+    roles = ["Rama", "Sita"] + ["Vanara"] * (len(players) - 2)
+    random.shuffle(roles)
+    return dict(zip(players, roles))

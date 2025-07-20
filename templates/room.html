@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Room {{ room_code }}</title>
+</head>
+<body>
+    <h2>Room Code: {{ room_code }}</h2>
+    <p>Players: {{ room['players'].keys() | join(', ') }}</p>
+
+    {% if room['started'] %}
+        <h3>Your Role: {{ room['roles'][username] }}</h3>
+        <p>⏰ Time Remaining: {{ time_left }}s</p>
+
+        {% if room['roles'][username] == "Rama" %}
+            <form method="POST">
+                <select name="guess">
+                    {% for p in room['players'].keys() %}
+                        <option>{{ p }}</option>
+                    {% endfor %}
+                </select>
+                <button name="guess" type="submit">Guess who is Sita</button>
+            </form>
+        {% endif %}
+    {% elif username == room['host'] %}
+        <form method="POST">
+            <button name="start" type="submit">Start Game</button>
+        </form>
+    {% endif %}
+
+    <h4>Chat</h4>
+    <ul>
+        {% for msg in room['messages'] %}
+            <li><b>{{ msg.sender }}</b>: {{ msg.text }}</li>
+        {% endfor %}
+    </ul>
+
+    <form method="POST">
+        <input name="message" placeholder="Send a message">
+        <button type="submit">Send</button>
+    </form>
+</body>
+</html>

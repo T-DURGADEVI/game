@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head><title>Result</title></head>
+<body>
+    {% if result == "win" %}
+        <h2>🎉 Correct! You found Sita!</h2>
+    {% else %}
+        <h2>❌ Wrong! Sita was {{ actual }}.</h2>
+    {% endif %}
+    <a href="/">Return Home</a>
+</body>
+</html>

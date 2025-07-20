@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ramayana Guess Game</title>
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial; background-color: #ffe9cc; text-align: center; }
+        #chat, #game, #result { display: none; margin-top: 20px; }
+        .msg-box { width: 300px; margin: 10px auto; }
+        .player-box { background-color: #fff; padding: 10px; border-radius: 10px; margin: 5px; }
+        #timer { font-size: 24px; margin: 20px; color: red; }
+    </style>
+</head>
+<body>
+    <h1>Ramayana Guess Game</h1>
+
+    <div id="join">
+        <input type="text" id="nameInput" placeholder="Enter your name">
+        <button onclick="joinGame()">Join</button>
+    </div>
+
+    <div id="game">
+        <p id="character"></p>
+        <div id="timer"></div>
+
+        <div id="chat">
+            <div id="messages" style="height:200px;overflow-y:auto;border:1px solid #000;"></div>
+            <input id="messageInput" placeholder="Type a message">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+
+        <div id="guessBox" style="margin-top:20px;">
+            <input id="guessInput" placeholder="Enter who is Sita">
+            <button onclick="makeGuess()">Submit Guess</button>
+        </div>
+    </div>
+
+    <div id="result">
+        <h2>Game Over</h2>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const socket = io();
+        let myName = "";
+        let myCharacter = "";
+
+        function joinGame() {
+            myName = document.getElementById('nameInput').value;
+            if (!myName) return;
+            socket.emit('join', { name: myName });
+            document.getElementById('join').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
+        }
+
+        socket.on('your_character', (data) => {
+            myCharacter = data.character;
+            document.getElementById('character').innerText = "Your character: " + myCharacter;
+            if (myCharacter === 'Rama') {
+                document.getElementById('guessBox').style.display = 'block';
+            } else {
+                document.getElementById('guessBox').style.display = 'none';
+            }
+            document.getElementById('chat').style.display = 'block';
+        });
+
+        function sendMessage() {
+            const msg = document.getElementById('messageInput').value;
+            socket.emit('send_message', { message: msg });
+            document.getElementById('messageInput').value = "";
+        }
+
+        socket.on('receive_message', (data) => {
+            const div = document.createElement('div');
+            div.className = 'player-box';
+            div.innerText = `${data.name}: ${data.message}`;
+            document.getElementById('messages').appendChild(div);
+        });
+
+        function makeGuess() {
+            const guess = document.getElementById('guessInput').value;
+            if (myCharacter === 'Rama') {
+                socket.emit('final_guess', { guess: guess });
+            }
+        }
+
+        socket.on('game_result', (data) => {
+            document.getElementById('game').style.display = 'none';
+            document.getElementById('result').style.display = 'block';
+            let resultHTML = `<h3>Rama guessed: ${data.guessed_name || "No Guess"}</h3>`;
+            for (const name in data.scores) {
+                resultHTML += `<p>${name} (${data.character_map[name]}): ${data.scores[name]} points</p>`;
+            }
+            document.getElementById('results').innerHTML = resultHTML;
+        });
+
+        socket.on('start_timer', () => {
+            let timeLeft = 180;
+            const timerElem = document.getElementById('timer');
+            const countdown = setInterval(() => {
+                let mins = Math.floor(timeLeft / 60);
+                let secs = timeLeft % 60;
+                timerElem.innerText = `Time left: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                timeLeft--;
+                if (timeLeft < 0) {
+                    clearInterval(countdown);
+                    timerElem.innerText = "Time's up!";
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
